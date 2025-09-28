@@ -1,0 +1,82 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+#define HISTORY_SIZE 5
+
+bool is_print(const char *input) {
+
+  if (input == NULL) return false;
+  size_t len = strlen(input);
+  if (len > 0 && input[len - 1] == '\n') len --;
+  return (len == 5 && strncmp(input, "print", 5) == 0);
+
+}
+
+void print_history(char *history[], size_t count, size_t index) {
+
+  size_t len = count < HISTORY_SIZE ? count : HISTORY_SIZE;
+  size_t start = (index + HISTORY_SIZE - len) % HISTORY_SIZE;
+  for(size_t i = 0; i < len; i++) {
+
+    printf("%s", history[(start + i) % HISTORY_SIZE]);
+
+  }
+
+}
+
+void add_history(char *history[], size_t *count, size_t *index, const char *line) {
+  
+  if(history[*index] != NULL) {
+  
+    free(history[*index]);
+
+  }
+
+  history[*index] = strdup(line);
+  *index = (*index + 1) % HISTORY_SIZE;
+  (*count)++;
+  
+
+}
+
+int main(void) {
+  char *history[HISTORY_SIZE] = {NULL};
+  size_t count = 0;
+  size_t index = 0;
+
+  char *line = NULL;
+  size_t len = 0;
+
+  while(1) {
+
+    printf("Enter input: ");
+    fflush(stdout);
+
+    ssize_t read = getline(&line, &len, stdin);
+
+    if (read == -1) break;
+    
+    add_history(history, &count, &index, line);
+      
+    if (is_print(line)) {
+      
+      print_history(history, count, index);
+
+    }
+
+
+}
+
+  
+  for(size_t i = 0; i < HISTORY_SIZE; i++) {
+  
+    free(history[i]);
+
+  }
+
+    free(line); 
+    return 0;
+
+}
