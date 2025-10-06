@@ -1,0 +1,90 @@
+#include <errno.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#define EXTRA_HEAP_BYTES 256
+#define BLOCK_BYTES 128
+#define BUF_SIZE 128
+
+extern void *sbrk(intptr_t increment);
+
+struct header {
+
+  uint64_t size;
+  struct header *next;
+};
+
+static void die(const char *msg) {
+
+  char buf[128];
+  int n = snprintf(buf, sizeof(buf), "Error: %s\n", msg);
+  if (n > 0)
+    write(STDERR_FILENO, buf, (size_t)n);
+  _exit(1);
+}
+
+static void print_out(const char *format, void *data, size_t data_size) {
+
+  char buf[BUF_SIZE];
+  int len = snprintf(buf, BUF_SIZE, format,
+                     (data_size == sizeof(uint64_t)) ? *(uint64_t *)data
+                                                     : *(void **)data);
+
+  if (len < 0)
+    die("snprintf");
+  write(STDOUT_FILENO, buf, (size_t)len);
+}
+
+static void print_byte_line(unsigned char b) {
+
+  char out[2] = {b ? '1' : '0', '\n'};
+  write(STDOUT_FILENO, out, 2);
+}
+
+int main(void) {
+
+  void *base = sbrk(EXTRA_HEAP_BYTES);
+  if (base == (void *)-1)
+    die("sbrk failed");
+
+  struct header *block1 = (struct header *)base;
+  struct header *block2 = (struct header *)((char *)base + BLOCK_BYTES);
+
+  block1->size = BLOCK_BYTES;
+  block1->next = NULL;
+
+  block2->size = BLOCK_BYTES;
+  block2->next = block1;
+
+  size_t header_sz = sizeof(struct header);
+
+  size_t data_sz = BLOCK_BYTES - header_sz;
+
+  unsigned char *data1 = (unsigned char *)block1 + header_sz;
+  unsigned char *data2 = (unsigned char *)block2 + header_sz;
+
+  memset(data1, 0, data_sz);
+  memset(data2, 1, data_sz);
+
+  print_out("first block: %p\n", &block1, sizeof(&block1));
+  print_out("second block: %p\n", &block2, sizeof(&block2));
+
+  print_out("first block size: %lu\n", &block1->size, sizeof(uint64_t));
+
+  print_out("first block next: %p\n", &block1->next, sizeof(&block1->next));
+
+  print_out("second block size: %lu\n", &block2->size, sizeof(uint64_t));
+
+  print_out("second block next: %p\n", &block2->next, sizeof(&block2->next));
+
+  for (size_t i = 0; i < data_sz; i++)
+    print_byte_line(data1[i]);
+  for (size_t i = 0; i < data_sz; i++)
+    print_byte_line(data2[i]);
+
+  return 0;
+}
