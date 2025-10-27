@@ -1,0 +1,85 @@
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define ASSERT(expr)                                                           \
+  {                                                                            \
+    if (!(expr)) {                                                             \
+      fprintf(stderr, "Assertion failed: %s (File %s, Line %d)\n", #expr,      \
+              __FILE__, __LINE__);                                             \
+      exit(1);                                                                 \
+    }                                                                          \
+  }
+
+#define TEST(expr)                                                             \
+  {                                                                            \
+    if (!(expr)) {                                                             \
+      fprintf(stderr, "Test failed: %s\n", #expr);                             \
+      exit(1);                                                                 \
+    } else {                                                                   \
+      printf("Test passed: %s\n", #expr);                                      \
+    }                                                                          \
+  }
+
+typedef struct node2 {
+  uint64_t data;
+  struct node2 *next;
+} node2_t;
+
+typedef struct info {
+  uint64_t sum;
+} info_t;
+
+node2_t *head2 = NULL;
+info_t info2 = {0};
+
+void insert_sorted2(uint64_t data) {
+  node2_t *new_node = malloc(sizeof(node2_t));
+  new_node->data = data;
+  new_node->next = NULL;
+
+  if (head2 == NULL || data < head2->data) {
+    new_node->next = head2;
+    head2 = new_node;
+  } else {
+    node2_t *curr = head2;
+    while (curr->next != NULL && curr->next->data < data)
+      curr = curr->next;
+    new_node->next = curr->next;
+    curr->next = new_node;
+  }
+  info2.sum += data;
+}
+
+uint64_t sum_list(node2_t *head) {
+  uint64_t total = 0;
+  node2_t *curr = head;
+  while (curr != NULL) {
+    total += curr->data;
+    curr = curr->next;
+  }
+  return total;
+}
+
+int index_of2(uint64_t data) {
+  node2_t *curr = head2;
+  int index = 0;
+  while (curr != NULL) {
+    if (curr->data == data)
+      return index;
+    curr = curr->next;
+    index++;
+  }
+  return -1;
+}
+
+int main_example2() {
+  insert_sorted2(1);
+  insert_sorted2(3);
+  insert_sorted2(5);
+  insert_sorted2(2);
+
+  ASSERT(info2.sum == sum_list(head2));
+  TEST(index_of2(2) == 1);
+  return 0;
+}
