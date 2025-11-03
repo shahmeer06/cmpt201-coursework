@@ -1,0 +1,25 @@
+#define _POSIX_C_SOURCE 200809L
+#include <stdio.h>
+#include <string.h>
+
+void print_len(const char *s) {
+
+  printf("String %s\n", s);
+  printf("Len: %ld\n", strlen(s));
+
+}
+
+
+int main(void) {
+  char input[] = "gcc main.c -o main";
+  char *saveptr, *token;
+  token = strtok_r(input, " \n", &saveptr);
+
+  while (token != NULL) {
+
+    printf("Token: %s\n", token);
+    token = strtok_r(NULL, " \n", &saveptr);
+  }
+
+  print_len(input);
+}

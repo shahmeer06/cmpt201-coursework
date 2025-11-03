@@ -1,0 +1,30 @@
+#define _GNU_SOURCE
+#include <pthread.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+
+
+
+void *my_thread(void *arg) {
+    
+  char *message = arg;
+  pid_t thread_id = gettid();
+
+  printf("Inside a thread\n");
+  printf("Message is: %s\n", message);
+  printf("Thread id: %d\n", thread_id);
+  return (void *)strlen(message);
+}
+
+int main(void) {
+  pthread_t thread_id;
+  pthread_create(&thread_id, NULL, my_thread, "Hello thread");
+  // sleep(5);
+  void *ans;
+
+  pthread_join(thread_id, &ans);
+  long long len = (long long)ans;
+  printf("Done: answer is %lld\n", len);
+}
